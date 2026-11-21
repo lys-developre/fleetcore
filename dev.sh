@@ -27,6 +27,7 @@ case "$cmd" in
   test-api)  $C exec api php bin/phpunit "$@" ;;
   test-web)  $C exec web pnpm test "$@" ;;
   lint)
+    $C exec api php bin/console cache:warmup --env=test
     $C exec api vendor/bin/phpstan analyse --memory-limit=512M
     $C exec api vendor/bin/php-cs-fixer fix --dry-run --diff
     $C exec web pnpm lint

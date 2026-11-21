@@ -36,6 +36,7 @@ test-api: ## Run PHPUnit
 test-web: ## Run Vitest
 	$(COMPOSE) exec web pnpm test
 lint: ## Static analysis and code style (api + web)
+	$(COMPOSE) exec api php bin/console cache:warmup --env=test
 	$(COMPOSE) exec api vendor/bin/phpstan analyse --memory-limit=512M
 	$(COMPOSE) exec api vendor/bin/php-cs-fixer fix --dry-run --diff
 	$(COMPOSE) exec web pnpm lint
