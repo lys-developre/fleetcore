@@ -1,0 +1,93 @@
+# FleetCore — production stack. Images are built by CI and published to GHCR.
+# Usage on the server:  docker compose -f compose.prod.yaml --env-file .env.prod up -d
+name: fleetcore
+
+x-api-env: &api-env
+  APP_ENV: prod
+  APP_SECRET: ${APP_SECRET:?APP_SECRET is required}
+  DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?serverVersion=17&charset=utf8
+  MESSENGER_TRANSPORT_DSN: doctrine://default?auto_setup=0
+  GOTENBERG_URL: http://gotenberg:3000
+  SMS_DRIVER: ${SMS_DRIVER:-sandbox}
+  TWILIO_SID: ${TWILIO_SID:-}
+  TWILIO_TOKEN: ${TWILIO_TOKEN:-}
+  TWILIO_FROM: ${TWILIO_FROM:-}
+  PUBLIC_BASE_URL: https://${DOMAIN}
+  TRUSTED_PROXIES: 172.16.0.0/12
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    image: ghcr.io/lys-developre/fleetcore-api:${IMAGE_TAG:-latest}
+    environment: *api-env
+    volumes:
+      - uploads:/app/var/uploads
+      - api_public:/app/public
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    image: ghcr.io/lys-developre/fleetcore-api:${IMAGE_TAG:-latest}
+    command: ["php", "bin/console", "messenger:consume", "async", "scheduler_default", "--time-limit=3600", "--memory-limit=128M"]
+    environment: *api-env
+    volumes:
+      - uploads:/app/var/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    command: ["gotenberg", "--api-timeout=30s", "--chromium-disable-javascript=true"]
+    restart: unless-stopped
+
+  web:
+    image: ghcr.io/lys-developre/fleetcore-web:${IMAGE_TAG:-latest}
+    environment:
+      API_INTERNAL_URL: http://caddy/api
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN is required}
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL is required}
+    volumes:
+      - ./infra/caddy/Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - api_public:/app/public:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+      - web
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  uploads:
+  api_public:
+  caddy_data:
+  caddy_config:

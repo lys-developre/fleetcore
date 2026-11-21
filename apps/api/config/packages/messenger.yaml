@@ -1,0 +1,26 @@
+framework:
+    messenger:
+        failure_transport: failed
+
+        transports:
+            # Background work: SMS, PDF generation, reminders. Stored in PostgreSQL, consumed by the worker container.
+            async:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    use_notify: true
+                    check_delayed_interval: 60000
+                retry_strategy:
+                    max_retries: 3
+                    multiplier: 2
+            failed: 'doctrine://default?queue_name=failed'
+
+        routing:
+            # Messages are routed to "async" explicitly per class as they are introduced, e.g.:
+            # 'App\Report\Application\Message\GenerateReportPdf': async
+
+when@test:
+    framework:
+        messenger:
+            transports:
+                async: 'in-memory://'
+                failed: 'in-memory://'

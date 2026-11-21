@@ -1,0 +1,100 @@
+# FleetCore — development stack. Usage: docker compose up -d  (or ./dev.sh up)
+name: fleetcore
+
+x-api-env: &api-env
+  APP_ENV: dev
+  APP_SECRET: ${APP_SECRET:-dev-secret-change-me}
+  DATABASE_URL: postgresql://${POSTGRES_USER:-fleetcore}:${POSTGRES_PASSWORD:-fleetcore}@db:5432/${POSTGRES_DB:-fleetcore}?serverVersion=17&charset=utf8
+  MESSENGER_TRANSPORT_DSN: doctrine://default?auto_setup=0
+  GOTENBERG_URL: http://gotenberg:3000
+  SMS_DRIVER: ${SMS_DRIVER:-sandbox}
+  TRUSTED_PROXIES: 172.16.0.0/12
+
+x-api-volumes: &api-volumes
+  - ./apps/api:/app
+  - api_vendor:/app/vendor
+  - api_var:/app/var
+  - uploads:/app/var/uploads
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-fleetcore}
+      POSTGRES_USER: ${POSTGRES_USER:-fleetcore}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fleetcore}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fleetcore} -d ${POSTGRES_DB:-fleetcore}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ./apps/api
+      target: dev
+    environment: *api-env
+    volumes: *api-volumes
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ./apps/api
+      target: dev
+    command: ["php", "bin/console", "messenger:consume", "async", "--time-limit=3600", "--memory-limit=128M", "-vv"]
+    environment: *api-env
+    volumes: *api-volumes
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_started
+    restart: unless-stopped
+    profiles: ["worker"]
+
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    command: ["gotenberg", "--api-timeout=30s", "--chromium-disable-javascript=true"]
+
+  web:
+    build:
+      context: ./apps/web
+      target: dev
+    environment:
+      NEXT_PUBLIC_API_URL: /api
+      API_INTERNAL_URL: http://caddy/api
+    volumes:
+      - ./apps/web:/app
+      - web_node_modules:/app/node_modules
+      - web_next:/app/.next
+      - web_pnpm_store:/pnpm/store
+    depends_on:
+      - api
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+    volumes:
+      - ./infra/caddy/Caddyfile.dev:/etc/caddy/Caddyfile:ro
+      - ./apps/api/public:/app/public:ro
+      - caddy_data:/data
+    depends_on:
+      - api
+      - web
+
+volumes:
+  db_data:
+  api_vendor:
+  api_var:
+  uploads:
+  web_node_modules:
+  web_next:
+  web_pnpm_store:
+  caddy_data:

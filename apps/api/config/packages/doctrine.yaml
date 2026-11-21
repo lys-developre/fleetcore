@@ -1,0 +1,90 @@
+doctrine:
+    dbal:
+        url: '%env(resolve:DATABASE_URL)%'
+        server_version: '17'
+        profiling_collect_backtrace: '%kernel.debug%'
+    orm:
+        validate_xml_mapping: true
+        naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+        identity_generation_preferences:
+            Doctrine\DBAL\Platforms\PostgreSQLPlatform: identity
+        auto_mapping: false
+        # One mapping per domain module. Entities live in src/<Module>/Domain.
+        mappings:
+            Identity:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Identity/Domain'
+                prefix: 'App\Identity\Domain'
+            Company:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Company/Domain'
+                prefix: 'App\Company\Domain'
+            Client:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Client/Domain'
+                prefix: 'App\Client\Domain'
+            WorkSite:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/WorkSite/Domain'
+                prefix: 'App\WorkSite\Domain'
+            Fleet:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Fleet/Domain'
+                prefix: 'App\Fleet\Domain'
+            Implement:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Implement/Domain'
+                prefix: 'App\Implement\Domain'
+            Report:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Report/Domain'
+                prefix: 'App\Report\Domain'
+            Signing:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Signing/Domain'
+                prefix: 'App\Signing\Domain'
+            Notification:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Notification/Domain'
+                prefix: 'App\Notification\Domain'
+            Shared:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Shared/Domain'
+                prefix: 'App\Shared\Domain'
+        controller_resolver:
+            auto_mapping: false
+
+when@test:
+    doctrine:
+        dbal:
+            # "TEST_TOKEN" is typically set by ParaTest
+            dbname_suffix: '_test%env(default::TEST_TOKEN)%'
+
+when@prod:
+    doctrine:
+        orm:
+            proxy_dir: '%kernel.build_dir%/doctrine/orm/Proxies'
+            query_cache_driver:
+                type: pool
+                pool: doctrine.system_cache_pool
+            result_cache_driver:
+                type: pool
+                pool: doctrine.result_cache_pool
+
+    framework:
+        cache:
+            pools:
+                doctrine.result_cache_pool:
+                    adapter: cache.app
+                doctrine.system_cache_pool:
+                    adapter: cache.system

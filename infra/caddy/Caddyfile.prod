@@ -1,0 +1,34 @@
+# Production: automatic HTTPS. DOMAIN and ACME_EMAIL are injected by compose.prod.yaml
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(self), geolocation=(self)"
+		-Server
+	}
+
+	handle /api/* {
+		root * /app/public
+		php_fastcgi api:9000
+	}
+	handle /bundles/* {
+		root * /app/public
+		file_server
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

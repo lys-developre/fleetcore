@@ -1,0 +1,17 @@
+flysystem:
+    storages:
+        # Photos, documents, PDFs, signatures and the company logo. Local disk in v1; switch adapter to S3 later.
+        uploads.storage:
+            adapter: 'local'
+            options:
+                directory: '%kernel.project_dir%/var/uploads'
+                permissions:
+                    file: { public: 0o640, private: 0o600 }
+                    dir: { public: 0o750, private: 0o700 }
+            visibility: private
+
+when@test:
+    flysystem:
+        storages:
+            uploads.storage:
+                adapter: 'memory'

@@ -1,0 +1,112 @@
+name: CI
+
+"on":
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: API · PHP 8.4 · Symfony 7.4
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: fleetcore
+          POSTGRES_USER: fleetcore
+          POSTGRES_PASSWORD: fleetcore
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U fleetcore -d fleetcore"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      APP_ENV: test
+      APP_SECRET: ci-secret
+      DATABASE_URL: postgresql://fleetcore:fleetcore@127.0.0.1:5432/fleetcore?serverVersion=17&charset=utf8
+      MESSENGER_TRANSPORT_DSN: in-memory://
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: intl, pdo_pgsql, opcache, zip, gd, apcu
+          coverage: none
+          tools: composer:v2
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-${{ hashFiles('apps/api/composer.lock') }}
+      - run: composer install --no-interaction --no-progress --prefer-dist
+      - run: composer validate --strict
+      - name: Lint container and YAML
+        run: |
+          php bin/console lint:container
+          php bin/console lint:yaml config --parse-tags
+      - name: Static analysis
+        run: vendor/bin/phpstan analyse --memory-limit=512M --no-progress
+      - name: Code style
+        run: vendor/bin/php-cs-fixer fix --dry-run --diff
+      - name: Database schema
+        run: |
+          php bin/console doctrine:database:create --if-not-exists --no-interaction
+          php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+      - name: Tests
+        run: php bin/phpunit
+
+  web:
+    name: Web · Node 24 · Next.js 16
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+        env:
+          NEXT_PUBLIC_API_URL: /api
+
+  docker:
+    name: Docker images build
+    runs-on: ubuntu-latest
+    needs: [api, web]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build API (prod target)
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/api
+          target: prod
+          push: false
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+      - name: Build web (prod target)
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/web
+          target: prod
+          push: false
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max

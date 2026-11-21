@@ -1,0 +1,29 @@
+# Development: single entry point on :80 (published as localhost:8080)
+{
+	auto_https off
+	admin off
+}
+
+:80 {
+	encode zstd gzip
+
+	# API: Symfony via PHP-FPM. Caddy and the api container share the /app/public path.
+	handle /api/* {
+		root * /app/public
+		php_fastcgi api:9000
+	}
+	handle /bundles/* {
+		root * /app/public
+		file_server
+	}
+
+	# Everything else: Next.js dev server (HMR websocket included)
+	handle {
+		reverse_proxy web:3000
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=../vendor/symfony/dependency-injection/Loader/schema/services.schema.json
+
+parameters:
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        bind:
+            string $appEnv: '%kernel.environment%'
+
+    # Every class in src/ is a service, except domain objects (entities, enums, value objects, exceptions, events),
+    # which are plain PHP and must never be autowired.
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/**/Domain/'
+            - '../src/Kernel.php'
