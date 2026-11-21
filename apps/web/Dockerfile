@@ -19,7 +19,7 @@ CMD ["pnpm", "dev", "--hostname", "0.0.0.0"]
 
 # ---- builder ----
 FROM base AS builder
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
 ARG NEXT_PUBLIC_API_URL=/api
