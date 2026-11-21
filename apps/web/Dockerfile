@@ -9,7 +9,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 FROM base AS dev
 ENV NODE_ENV=development \
     WATCHPACK_POLLING=true \
-    CHOKIDAR_USEPOLLING=true \n    npm_config_store_dir=/pnpm/store
+    CHOKIDAR_USEPOLLING=true \
+    npm_config_store_dir=/pnpm/store
 COPY docker/entrypoint-dev.sh /usr/local/bin/entrypoint-dev
 RUN chmod +x /usr/local/bin/entrypoint-dev
 EXPOSE 3000
