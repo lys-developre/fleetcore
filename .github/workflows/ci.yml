@@ -55,8 +55,18 @@ jobs:
         run: composer validate --strict
       - name: Install dependencies
         run: composer install --no-interaction --no-progress --prefer-dist --no-scripts
-      - name: Run post-install scripts
-        run: composer run-script post-install-cmd
+      - name: Warm up the test kernel
+        run: |
+          php -v
+          php bin/console about --no-interaction || true
+          php bin/console cache:clear --no-interaction -vvv
+          php bin/console assets:install public --no-interaction -vvv
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          echo "::group::php -m"; php -m; echo "::endgroup::"
+          echo "::group::var/log"; cat var/log/*.log 2>/dev/null || echo "(no logs)"; echo "::endgroup::"
+          echo "::group::env"; env | grep -E '^(APP_|DATABASE_URL|MESSENGER_)' ; echo "::endgroup::"
       - name: Lint container and YAML
         run: |
           php bin/console lint:container
