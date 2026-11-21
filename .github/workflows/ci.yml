@@ -41,13 +41,22 @@ jobs:
           extensions: intl, pdo_pgsql, opcache, zip, gd, apcu
           coverage: none
           tools: composer:v2
-      - name: Cache Composer
-        uses: actions/cache@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
         with:
-          path: ~/.composer/cache
+          path: ${{ steps.composer-cache.outputs.dir }}
           key: composer-${{ hashFiles('apps/api/composer.lock') }}
-      - run: composer install --no-interaction --no-progress --prefer-dist
-      - run: composer validate --strict
+          restore-keys: composer-
+      - name: Validate composer files
+        run: composer validate --strict
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts
+      - name: Run post-install scripts
+        run: composer run-script post-install-cmd
       - name: Lint container and YAML
         run: |
           php bin/console lint:container
