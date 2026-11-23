@@ -28,12 +28,15 @@ FROM base AS builder
 COPY composer.json composer.lock symfony.lock ./
 RUN composer install --no-dev --no-scripts --no-progress --prefer-dist --no-interaction
 COPY . .
+# No "|| true": a broken prod config must fail the build, not the first request
 RUN composer dump-autoload --optimize --classmap-authoritative --no-dev \
-    && composer run-script --no-dev post-install-cmd || true
+    && composer run-script --no-dev post-install-cmd \
+    && mkdir -p var/uploads
 
 # ---- production ----
 FROM base AS prod
 COPY --from=builder /app /app
-RUN chown -R www-data:www-data /app/var
+# var/uploads exists in the image so the named volume mounted there inherits www-data ownership
+RUN mkdir -p /app/var/uploads && chown -R www-data:www-data /app/var
 USER www-data
 CMD ["php-fpm"]
