@@ -38,6 +38,7 @@ El producto nace de un descubrimiento funcional completo con una empresa real de
 | [Formularios 01 a 07](docs/) | Clientes y obras · Maquinaria · Camiones y equipos · Implementos · Usuarios y permisos · Albarán · Firma |
 | [Modelo entidad-relación](docs/modelo-datos-01-entidad-relacion.md) | 35 tablas, restricciones, índices |
 | [Arquitectura y plan](docs/arquitectura-01-tecnica-y-plan.md) | Monolito modular Symfony, PWA Next.js, Docker, hitos |
+| [Despliegue](docs/despliegue.md) | Servidor, DNS, `.env.prod`, actualizaciones y copias |
 | [ADR](docs/adr/) | Decisiones de arquitectura razonadas |
 | [Glosario](docs/glosario.md) | Español del negocio ↔ inglés del código |
 
