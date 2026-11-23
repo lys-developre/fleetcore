@@ -16,6 +16,11 @@ $COMPOSE exec -T db sh -c 'until pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB
 echo "==> Running migrations"
 $COMPOSE run --rm --no-deps api php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
 
+echo "==> Refreshing public assets shared by api and caddy"
+# A named volume is only seeded from the image when empty; recreate it so a new image's public/ is used
+$COMPOSE rm -sf api caddy
+docker volume rm -f fleetcore_api_public >/dev/null
+
 echo "==> Starting services"
 $COMPOSE up -d --remove-orphans
 
