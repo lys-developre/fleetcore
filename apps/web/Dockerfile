@@ -24,7 +24,8 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 ARG NEXT_PUBLIC_API_URL=/api
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-RUN pnpm build
+# public/ may be absent in a fresh checkout (git does not track empty dirs); the prod stage copies it
+RUN mkdir -p public && pnpm build
 
 # ---- production: standalone output ----
 FROM node:24-alpine AS prod
