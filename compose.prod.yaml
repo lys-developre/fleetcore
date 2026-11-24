@@ -61,7 +61,7 @@ services:
   web:
     image: ghcr.io/lys-developre/fleetcore-web:${IMAGE_TAG:-latest}
     environment:
-      API_INTERNAL_URL: http://caddy/api
+      API_INTERNAL_URL: http://caddy:8081/api
     depends_on:
       - api
     restart: unless-stopped

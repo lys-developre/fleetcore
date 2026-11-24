@@ -32,3 +32,15 @@
 		format json
 	}
 }
+
+# Internal: Next.js server components reach the API over the compose network.
+# Plain HTTP on a port compose.prod.yaml does not publish, so it is unreachable from outside.
+:8081 {
+	handle /api/* {
+		root * /app/public
+		php_fastcgi api:9000
+	}
+	handle {
+		respond 404
+	}
+}
