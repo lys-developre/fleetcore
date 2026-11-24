@@ -1,6 +1,11 @@
 # Production: automatic HTTPS. DOMAIN and ACME_EMAIL are injected by compose.prod.yaml
 {
 	email {$ACME_EMAIL}
+	# The Next.js server forwards the browser's X-Forwarded-For when it calls the API on :8081.
+	# Only private (container) addresses are trusted; Internet clients cannot spoof it.
+	servers {
+		trusted_proxies static private_ranges
+	}
 }
 
 {$DOMAIN} {

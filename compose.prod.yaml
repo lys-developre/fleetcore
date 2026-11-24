@@ -13,6 +13,7 @@ x-api-env: &api-env
   TWILIO_TOKEN: ${TWILIO_TOKEN:-}
   TWILIO_FROM: ${TWILIO_FROM:-}
   PUBLIC_BASE_URL: https://${DOMAIN}
+  COMPANY_NAME: ${COMPANY_NAME:?COMPANY_NAME is required}
   TRUSTED_PROXIES: 172.16.0.0/12
 
 services:

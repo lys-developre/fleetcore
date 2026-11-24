@@ -2,6 +2,10 @@
 {
 	auto_https off
 	admin off
+	# Keep the browser's IP when the Next.js server calls the API on behalf of a user (see Caddyfile.prod)
+	servers {
+		trusted_proxies static private_ranges
+	}
 }
 
 :80 {

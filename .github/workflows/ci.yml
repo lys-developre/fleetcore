@@ -153,6 +153,7 @@ jobs:
           cat > .env.prod <<EOF
           DOMAIN=localhost
           ACME_EMAIL=ci@example.com
+          COMPANY_NAME=Excavaciones CI
           IMAGE_TAG=${{ github.sha }}
           POSTGRES_DB=fleetcore
           POSTGRES_USER=fleetcore
