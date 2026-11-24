@@ -3,3 +3,6 @@ node_modules
 .next
 .env*.local
 .pnpm-store
+test-results
+playwright-report
+blob-report

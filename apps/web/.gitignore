@@ -45,3 +45,8 @@ next-env.d.ts
 
 # pnpm store created by the dev container
 .pnpm-store/
+
+# Playwright
+/test-results
+/playwright-report
+/blob-report

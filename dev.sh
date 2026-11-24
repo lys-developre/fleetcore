@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Same targets as the Makefile, for machines without make (Windows Git Bash).
 # Usage: ./dev.sh up | down | logs | ps | sh-api | sh-web | composer <args> | console <args> | pnpm <args>
-#        ./dev.sh migrate | fixtures | test | test-api | test-web | lint | fix | worker | reset
+#        ./dev.sh migrate | fixtures | test | test-api | test-web | e2e | lint | fix | worker | reset
 set -euo pipefail
 cd "$(dirname "$0")"
 if docker compose version >/dev/null 2>&1; then C="docker compose"; else C="docker-compose"; fi
@@ -26,6 +26,7 @@ case "$cmd" in
   test)      $C exec api php bin/phpunit; $C exec web pnpm test ;;
   test-api)  $C exec api php bin/phpunit "$@" ;;
   test-web)  $C exec web pnpm test "$@" ;;
+  e2e)       $C --profile e2e run --rm e2e npx playwright test "$@" ;;
   lint)
     $C exec api php bin/console cache:warmup --env=test
     $C exec api vendor/bin/phpstan analyse --memory-limit=512M

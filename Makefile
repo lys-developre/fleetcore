@@ -35,6 +35,8 @@ test-api: ## Run PHPUnit
 	$(COMPOSE) exec api php bin/phpunit
 test-web: ## Run Vitest
 	$(COMPOSE) exec web pnpm test
+e2e: ## Run Playwright end-to-end tests against the running stack
+	$(COMPOSE) --profile e2e run --rm e2e npx playwright test
 lint: ## Static analysis and code style (api + web)
 	$(COMPOSE) exec api php bin/console cache:warmup --env=test
 	$(COMPOSE) exec api vendor/bin/phpstan analyse --memory-limit=512M
@@ -49,4 +51,4 @@ worker: ## Start the Messenger worker (profile)
 reset: ## Destroy containers and volumes (data loss)
 	$(COMPOSE) down -v --remove-orphans
 
-.PHONY: help up down logs ps sh-api sh-web composer console pnpm migrate fixtures test test-api test-web lint fix worker reset
+.PHONY: help up down logs ps sh-api sh-web composer console pnpm migrate fixtures test test-api test-web e2e lint fix worker reset

@@ -22,5 +22,6 @@ when@test:
     framework:
         messenger:
             transports:
+                # Inspect dispatched messages with the in-memory transport. "failed" stays on Doctrine
+                # so the schema listener knows messenger_messages and schema validation matches prod.
                 async: 'in-memory://'
-                failed: 'in-memory://'

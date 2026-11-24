@@ -16,7 +16,7 @@
 Las empresas de maquinaria documentan cada jornada con un **albarán de papel**: cliente, obra, máquina, horas, viajes y la firma del encargado. El papel viaja en la cabina, se escribe a mano, se pierde, llega tarde a oficina y es difícil saber qué está pendiente de firmar. Con ese albarán se factura y se defiende el trabajo hecho.
 
 ### La solución
-FleetCore digitaliza la cadena completa sin trasladar trabajo administrativo a quien está en el tajo:
+FleetCore digitaliza la cadena completa sin trasladar trabajo administrativo a maquinistas, choferes y operarios:
 
 1. **Oficina prepara los datos** una sola vez: clientes, obras, máquinas, camiones, equipos acoplables, implementos y recorridos.
 2. **El operario crea el albarán desde el móvil** en menos de dos minutos: elige entre lo preparado, pone horas y viajes, envía. Al día siguiente repite el de ayer y cambia los números. Funciona sin cobertura.
