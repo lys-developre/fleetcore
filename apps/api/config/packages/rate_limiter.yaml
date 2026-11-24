@@ -1,0 +1,28 @@
+# Throttling of the public auth endpoints (formularios-05, secciones 6.4, 6.5 y 9).
+# Account lockout lives on the user; these limiters cover what the account cannot: unknown phones and IPs.
+framework:
+    rate_limiter:
+        # Any login attempt from one address
+        login_ip:
+            policy: sliding_window
+            limit: 30
+            interval: '15 minutes'
+        # Unknown phones get throttled like a real account locks (5 failures), so a 429 reveals nothing
+        login_unknown_phone:
+            policy: fixed_window
+            limit: 5
+            interval: '15 minutes'
+        # "Máximo 3 solicitudes por hora por teléfono"
+        password_reset_phone:
+            policy: fixed_window
+            limit: 3
+            interval: '1 hour'
+        password_reset_ip:
+            policy: sliding_window
+            limit: 10
+            interval: '1 hour'
+        # Opening or using activation and recovery links
+        account_link_ip:
+            policy: sliding_window
+            limit: 30
+            interval: '15 minutes'

@@ -2,14 +2,22 @@
 framework:
     secret: '%env(APP_SECRET)%'
 
-    # Note that the session will be started ONLY if you read or write from it.
-    session: true
+    # Stateless JSON API: authentication is a bearer token per device, never a PHP session.
+    session: false
 
-    #esi: true
-    #fragments: true
+    # Caddy, and the Next.js server calling through Caddy, sit in front of PHP-FPM. Trusting them makes
+    # getClientIp() return the browser's address, which rate limiting and the audit log rely on.
+    trusted_proxies: '%env(TRUSTED_PROXIES)%'
+    trusted_headers: ['x-forwarded-for', 'x-forwarded-proto']
+
+    # Every date the API returns is RFC 3339 in UTC; the web app shows it in the user's local time.
+    serializer:
+        default_context:
+            datetime_timezone: UTC
 
 when@test:
     framework:
         test: true
-        session:
-            storage_factory_id: session.storage.factory.mock_file
+        # Fresh rate limiter and cache state for every kernel: tests never throttle each other
+        cache:
+            app: cache.adapter.array

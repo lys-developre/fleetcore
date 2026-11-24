@@ -9,10 +9,13 @@ services:
         bind:
             string $appEnv: '%kernel.environment%'
 
-    # Every class in src/ is a service, except domain objects (entities, enums, value objects, exceptions, events),
-    # which are plain PHP and must never be autowired.
+    # Every class in src/ is a service, except domain objects (entities, enums, value objects, exceptions, events)
+    # and data carriers (request/response DTOs, Messenger messages), which are plain PHP and must never be autowired.
     App\:
         resource: '../src/'
         exclude:
             - '../src/**/Domain/'
+            - '../src/**/Application/Input/'
+            - '../src/**/Application/Output/'
+            - '../src/**/Application/Message/'
             - '../src/Kernel.php'

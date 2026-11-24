@@ -15,8 +15,8 @@ framework:
             failed: 'doctrine://default?queue_name=failed'
 
         routing:
-            # Messages are routed to "async" explicitly per class as they are introduced, e.g.:
-            # 'App\Report\Application\Message\GenerateReportPdf': async
+            # Messages are routed to "async" explicitly per class as they are introduced
+            'App\Notification\Application\Message\SendSms': async
 
 when@test:
     framework:
