@@ -4,7 +4,7 @@ Guía para poner en marcha la demo en `fleetcore.larryyoffre.com`. La producció
 
 ## Cómo funciona
 
-1. Cada push a `main` con CI verde publica dos imágenes en GitHub Container Registry: `ghcr.io/lys-developre/fleetcore-api` y `ghcr.io/lys-developre/fleetcore-web`, con las etiquetas `latest` y el SHA del commit.
+1. Cada push a `main` con CI verde publica dos imágenes en GitHub Container Registry: `ghcr.io/lys-developre/fleetcore-api` y `ghcr.io/lys-developre/fleetcore-web`, con las etiquetas `latest` y el SHA del commit. Antes de publicarlas, CI las levanta con `compose.prod.yaml` en `https://localhost` y pasa el smoke de Playwright contra ellas.
 2. El servidor no compila nada. Descarga las imágenes, ejecuta las migraciones y arranca el stack de `compose.prod.yaml`.
 3. Caddy obtiene el certificado HTTPS de Let's Encrypt de forma automática.
 

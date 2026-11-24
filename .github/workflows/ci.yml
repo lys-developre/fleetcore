@@ -2,7 +2,8 @@ name: CI
 
 "on":
   push:
-    branches: [main]
+    # Every branch: work is pushed straight to branches, without pull requests
+    branches: ["**"]
   pull_request:
     branches: [main]
 
@@ -107,31 +108,25 @@ jobs:
           NEXT_PUBLIC_API_URL: /api
 
   docker:
-    name: Docker images build
+    name: Docker images · prod smoke · publish
     runs-on: ubuntu-latest
     needs: [api, web]
     permissions:
       contents: read
       packages: write
     env:
-      # Images are published only from main; pull requests just prove they build
+      # Images are published only from main, and only after the smoke passes against them
       PUBLISH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+      COMPOSE: docker compose -f compose.prod.yaml --env-file .env.prod
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
-      - name: Log in to GHCR
-        if: env.PUBLISH == 'true'
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build API (prod target)
         uses: docker/build-push-action@v6
         with:
           context: apps/api
           target: prod
-          push: ${{ env.PUBLISH == 'true' }}
+          load: true
           tags: |
             ghcr.io/lys-developre/fleetcore-api:latest
             ghcr.io/lys-developre/fleetcore-api:${{ github.sha }}
@@ -143,10 +138,71 @@ jobs:
         with:
           context: apps/web
           target: prod
-          push: ${{ env.PUBLISH == 'true' }}
+          load: true
           tags: |
             ghcr.io/lys-developre/fleetcore-web:latest
             ghcr.io/lys-developre/fleetcore-web:${{ github.sha }}
           labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
           cache-from: type=gha,scope=web
           cache-to: type=gha,scope=web,mode=max
+
+      # Same steps as infra/scripts/deploy.sh, with the images just built. DOMAIN=localhost makes Caddy
+      # serve HTTPS from its internal CA, so the production Caddyfile and its headers are exercised too.
+      - name: Start the production stack
+        run: |
+          cat > .env.prod <<EOF
+          DOMAIN=localhost
+          ACME_EMAIL=ci@example.com
+          IMAGE_TAG=${{ github.sha }}
+          POSTGRES_DB=fleetcore
+          POSTGRES_USER=fleetcore
+          POSTGRES_PASSWORD=ci-password
+          APP_SECRET=ci-secret-0123456789abcdef
+          EOF
+          $COMPOSE up -d --wait db
+          $COMPOSE run --rm --no-deps api php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+          $COMPOSE up -d --wait
+          curl -fsSk --retry 30 --retry-delay 2 --retry-all-errors https://localhost/api/health && echo
+          curl -fsSk --retry 30 --retry-delay 2 --retry-all-errors -o /dev/null https://localhost/
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+      - name: Install web dependencies
+        working-directory: apps/web
+        run: pnpm install --frozen-lockfile
+      - name: Playwright smoke against the production images
+        # Official image: browsers and their system libraries included, same version as @playwright/test
+        run: |
+          docker run --rm --network host --ipc host -e CI=true -e E2E_BASE_URL=https://localhost \
+            -v "$PWD/apps/web:/app" -w /app \
+            mcr.microsoft.com/playwright:v1.65.1-noble npx playwright test
+      - name: Stack logs on failure
+        if: failure()
+        run: $COMPOSE logs --no-color --tail 200
+      - name: Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            apps/web/playwright-report
+            apps/web/test-results
+          retention-days: 7
+
+      - name: Log in to GHCR
+        if: env.PUBLISH == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish images
+        if: env.PUBLISH == 'true'
+        run: |
+          docker push --all-tags ghcr.io/lys-developre/fleetcore-api
+          docker push --all-tags ghcr.io/lys-developre/fleetcore-web

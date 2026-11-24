@@ -13,14 +13,15 @@ FleetCore lo desarrolla una persona, pero el repositorio sigue las convenciones 
 Commits pequeños. Un commit, un cambio explicable en una línea.
 
 ## Ramas
-`main` siempre desplegable. Trabajo en ramas `h<N>/<tema>` por hito (`h1/access-tokens`), fusionadas con pull request aunque el autor sea el único revisor: el historial de PR cuenta la historia.
+`main` siempre desplegable. Trabajo en ramas `h<N>/<tema>` por hito (`h1/access-tokens`), que se suben directamente y se fusionan en `main` cuando la CI de la rama está en verde. Sin pull requests: el proyecto no tiene más revisores, y la CI se ejecuta en cada push a cualquier rama.
 
-## Antes de abrir un pull request
+## Antes de subir una rama
 ```bash
 ./dev.sh lint   # PHPStan nivel 8, php-cs-fixer, ESLint, tsc
 ./dev.sh test   # PHPUnit y Vitest
+./dev.sh e2e    # Playwright contra el stack de desarrollo
 ```
-La CI ejecuta lo mismo más la construcción de las imágenes de producción.
+La CI ejecuta lo mismo y además construye las imágenes de producción, las levanta con `compose.prod.yaml` y pasa Playwright contra ellas. Desde `main` solo se publican si ese smoke pasa.
 
 ## Backend (apps/api)
 - Un módulo por contexto de dominio en `src/<Módulo>/{Domain,Application,Infrastructure,Presentation}`.
