@@ -26,7 +26,7 @@ FleetCore digitaliza la cadena completa sin trasladar trabajo administrativo a m
 El alcance de la primera versión es deliberadamente **solo albaranes**. Una funcionalidad entra únicamente si hace que el albarán se cree más rápido o se firme antes y de forma más defendible.
 
 ### Estado del proyecto
-En desarrollo. Hito actual: **H0 Cimientos**. El plan completo por hitos está en [`docs/arquitectura-01-tecnica-y-plan.md`](docs/arquitectura-01-tecnica-y-plan.md).
+En desarrollo. Hito actual: **H1 Identidad** — backend terminado (usuarios, roles, sesiones por dispositivo, activación y recuperación por SMS, matriz de permisos probada); en curso las pantallas de acceso del frontend. El plan completo por hitos está en [`docs/arquitectura-01-tecnica-y-plan.md`](docs/arquitectura-01-tecnica-y-plan.md) y el punto exacto de avance en [`docs/estado.md`](docs/estado.md).
 
 ### Documentación
 El producto nace de un descubrimiento funcional completo con una empresa real del sector, documentado antes de escribir código:
